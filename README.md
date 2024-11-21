@@ -1,66 +1,77 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Fuvarozó Rendszer
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Egyszerű fuvarozó rendszer Laravel keretrendszerben, amely lehetővé teszi a cég adminisztrátora új munkákat hozhat létre, és azokat fuvarozókhoz rendelheti. Minden fuvarozónak egy járműve lehet, és több munkát végezhet egy időben. A feladat fő célja a backend funkcionalitás kidolgozása, a frontend lehet egyszerű, minimalista, az adminisztrációs műveletek kezelése a fő hangsúly. 
 
-## About Laravel
+## Funkciók
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Felhasználói szerepkörök
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Adminisztrátor**: Munkák kezelése és fuvarozókhoz rendelése
+- **Fuvarozó**: Kiosztott munkák megtekintése és státusz frissítése
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Főbb entitások
 
-## Learning Laravel
+#### Fuvarozó
+- Név
+- E-mail cím
+- Jelszó
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+#### Jármű
+- Márka
+- Típus
+- Rendszám
+- Fuvarozó kapcsolat
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+#### Munka
+- Kiindulási cím
+- Érkezési cím
+- Címzett neve
+- Címzett telefonszáma
+- Státusz (Kiosztva, Folyamatban, Elvégezve, Sikertelen)
+- Fuvarozó kapcsolat
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Adminisztrátor funkciói
+- Munkák létrehozása: Az adminisztrátor létrehozhat új fuvarfeladatokat, melyek tartalmazzák a kiindulási címet, érkezési címet, címzett nevét és elérhetőségét.
+- Munkák módosítása: Munkák adatai (pl. címek, címzett) módosíthatók az adminisztrátor által.
+- Munkák törlése: Adminisztrátor törölhet munkákat a rendszerből.
+- Munkák fuvarozókhoz rendelése: Az adminisztrátor a létrehozott munkákat fuvarozókhoz rendelheti.
 
-## Laravel Sponsors
+### Fuvarozó funkciói
+- Munkák megtekintése: Fuvarozók megtekinthetik a nekik kiosztott munkákat, azok státuszát, valamint a címzett adatait.
+- Munkák státuszának módosítása: A fuvarozó a neki kiosztott munka státuszát tudja frissíteni:
+    - Kiosztva
+    - Folyamatban
+    - Elvégezve
+    - Sikertelen (pl. a címzett nem volt elérhető)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Technikai követelmények
 
-### Premium Partners
+### Backend követelmények (Laravel)
+- Laravel keretrendszer használata
+- Munkák létrehozása, módosítása, törlése
+- Munkák hozzárendelése fuvarozókhoz
+- Fuvarozók regisztrációja és hitelesítése (pl. Laravel Auth használatával)
+- Fuvarozók státusz frissítési lehetősége a kiosztott munkák esetén
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### Frontend követelmények
+- Egyszerű és minimalista frontend megoldás
+- Nem szükséges komplex design vagy interaktív felületek kialakítása, de a funkciók használata legyen egyértelmű (pl. React.js vagy akár egyszerű blade sablon is elegendő)
 
-## Contributing
+### Pontos követelmények
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Laravel 10.x verzió használata
+- Adatbázis: MySQL vagy SQLite
+- Verziókezelés: Készíts egy GitHub repository-t, és oszd meg a linket a megoldással.
 
-## Code of Conduct
+### Opcionális funkciók
+- Státusz alapú szűrés: Az adminisztrátor szűrheti a munkákat a státuszuk szerint (pl. csak folyamatban lévő munkák megjelenítése).
+- Értesítések: Az adminisztrátor értesítést kaphat, ha egy munka sikertelen lett.
+- API végpontok: Készíts egy egyszerű REST API-t a munkák létrehozására, módosítására, valamint a fuvarozók státuszának frissítésére.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Telepítés és futtatás
 
-## Security Vulnerabilities
+...
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Tesztelés
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+...
