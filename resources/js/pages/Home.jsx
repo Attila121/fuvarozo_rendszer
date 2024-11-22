@@ -6,7 +6,7 @@ const Home = () => {
     <div className="text-center">
       <h1 className="text-4xl font-bold mb-4">Welcome</h1>
       <p className="text-gray-600">
-        Manage your deliveries efficiently
+        This is a simple delivery system application built with Laravel and React.
       </p>
     </div>
   );

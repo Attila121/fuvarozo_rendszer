@@ -7,6 +7,8 @@ import MainLayout from './components/layouts/MainLayout';
 import Home from './pages/Home';
 import AdminDashboard from './components/admin/Dashboard';
 import DriverDashboard from './components/driver/Dashboard';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 const App = () => {
     return (
@@ -15,6 +17,8 @@ const App = () => {
                 <Route index element={<Home />} />
                 <Route path="admin" element={<AdminDashboard />} />
                 <Route path="driver" element={<DriverDashboard />} />
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
             </Route>
         </Routes>
     );
