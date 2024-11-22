@@ -61,7 +61,6 @@ Egyszerű fuvarozó rendszer Laravel keretrendszerben, amely lehetővé teszi a 
 
 - Laravel 10.x verzió használata
 - Adatbázis: MySQL vagy SQLite
-- Verziókezelés: Készíts egy GitHub repository-t, és oszd meg a linket a megoldással.
 
 ### Opcionális funkciók
 - Státusz alapú szűrés: Az adminisztrátor szűrheti a munkákat a státuszuk szerint (pl. csak folyamatban lévő munkák megjelenítése).
