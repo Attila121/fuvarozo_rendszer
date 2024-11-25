@@ -8,6 +8,7 @@ use App\Models\Job;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 
 
@@ -47,56 +48,39 @@ class JobController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
-        
-        if (!$user) {
+        try {
+            if (!auth()->user()) {
+                return response()->json(['message' => 'Unauthorized'], 401);
+            }
+
+            Log::info('User accessing jobs', [
+                'user_id' => auth()->id(),
+                'is_admin' => auth()->user()->isAdmin()
+            ]);
+
+            if (auth()->user()->isAdmin()) {
+                $jobs = Job::with('driver')->get();
+            } else {
+                $jobs = Job::where('driver_id', auth()->id())->get();
+            }
+
             return response()->json([
-                'message' => 'Unauthorized'
-            ], 401);
-        }
-        
+                'status' => 'success',
+                'jobs' => $jobs
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in jobs index:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
 
-        if ($user->isAdmin()) {
-            $jobs = Job::with('driver')
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($job) {
-                return [
-                    'id' => $job->id,
-                    'pickup_address' => $job->pickup_address,
-                    'delivery_address' => $job->delivery_address,
-                    'recipient_name' => $job->recipient_name,
-                    'recipient_phone' => $job->recipient_phone,
-                    'status' => $job->status,
-                    'driver' => $job->driver ? [
-                        'id' => $job->driver->id,
-                        'name' => $job->driver->name,
-                    ] : null,
-                    'created_at' => $job->created_at->format('Y-m-d H:i:s')
-                ];
-            });
-        } else {
-            $jobs = $user->jobs()
-                    ->orderBy('created_at', 'desc')
-                    ->get()
-                    ->map(function ($job) {
-                        return [
-                            'id' => $job->id,
-                            'pickup_address' => $job->pickup_address,
-                            'delivery_address' => $job->delivery_address,
-                            'recipient_name' => $job->recipient_name,
-                            'recipient_phone' => $job->recipient_phone,
-                            'status' => $job->status,
-                            'created_at' => $job->created_at->format('Y-m-d H:i:s')
-                        ];
-                    });
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to fetch jobs'
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'jobs' => $jobs
-        ]);
     }
+
 
 
     /**
@@ -126,8 +110,6 @@ class JobController extends Controller
             'message' => 'Job created',
             'job' => $job
         ], 201);
-
-
     }
 
     /**
@@ -157,9 +139,9 @@ class JobController extends Controller
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
-        } 
+        }
 
-        if ($user->isAdmin()){
+        if ($user->isAdmin()) {
             $validated = $request->validate([
                 'pickup_address' => 'required|string',
                 'delivery_address' => 'required|string',
@@ -173,7 +155,7 @@ class JobController extends Controller
                     Job::STATUS_FAILED
                 ])
             ]);
-        }else{
+        } else {
             $validated = $request->validate([
                 'status' => 'required|in,' . implode(',', [
                     Job::STATUS_IN_PROGRESS,
@@ -197,7 +179,7 @@ class JobController extends Controller
     public function destroy(Job $job)
     {
 
-        if(!Auth::user()->isAdmin()){
+        if (!Auth::user()->isAdmin()) {
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
@@ -212,7 +194,8 @@ class JobController extends Controller
     /**
      * Assign a job to a driver.
      */
-    public function assignDriver(Request $request, Job $job){
+    public function assignDriver(Request $request, Job $job)
+    {
         if (!Auth::user()->isAdmin()) {
             return response()->json([
                 'message' => 'Unauthorized'

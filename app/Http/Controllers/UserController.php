@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use App\Models\User;
+use App\Models\Job;
 
 class UserController extends Controller
 {
@@ -65,7 +68,7 @@ class UserController extends Controller
     public function driverJobs($driverId)
     {
         $user = auth()->user();
-        
+
         // Only admin or the driver themselves can see their jobs
         if (!$user->isAdmin() && $user->id != $driverId) {
             return response()->json([
@@ -84,19 +87,33 @@ class UserController extends Controller
 
     public function drivers()
     {
-        if (!auth()->user()->isAdmin()) {
+        try {
+            if (!auth()->user()->isAdmin()) {
+                return response()->json([
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+
+            $drivers = User::where('role', 'driver')
+                ->select('id', 'name', 'email')
+                ->orderBy('name')
+                ->get();
+
             return response()->json([
-                'message' => 'Unauthorized'
-            ], 403);
+                'status' => 'success',
+                'drivers' => $drivers
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching drivers:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to fetch drivers'
+            ], 500);
         }
-
-        $drivers = User::where('role', 'driver')
-            ->select('id', 'name')
-            ->get();
-
-        return response()->json([
-            'drivers' => $drivers
-        ]);
     }
     public function admins()
     {

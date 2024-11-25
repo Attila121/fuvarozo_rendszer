@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\JobController;
+use App\Http\Controllers\UserController;
+
+
 
 // Public routes (no authentication required)
 Route::post('login', [AuthController::class, 'login']);
@@ -25,6 +29,12 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/jobs', [JobController::class, 'index']);
+    Route::post('/jobs', [JobController::class, 'store']);
+    Route::put('/jobs/{job}', [JobController::class, 'update']);
+    Route::delete('/jobs/{job}', [JobController::class, 'destroy']);
+    Route::post('/jobs/{job}/assign', [JobController::class, 'assignDriver']);
+
+    Route::get('/drivers', [UserController::class, 'drivers']);
 });

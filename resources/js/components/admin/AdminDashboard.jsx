@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../../utils/axios"; 
+import api from "../../services/api";
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -18,9 +18,9 @@ const AdminDashboard = () => {
 
     // Check authentication on component mount
     useEffect(() => {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user || user.role !== 'admin') {
-            navigate('/login');
+        const user = JSON.parse(localStorage.getItem("user"));
+        if (!user || user.role !== "admin") {
+            navigate("/login");
             return;
         }
         fetchData();
@@ -32,15 +32,17 @@ const AdminDashboard = () => {
             setError(null);
 
             const [jobsResponse, driversResponse] = await Promise.all([
-                axios.get("/api/jobs"),
-                axios.get("/api/drivers")
+                api.get("/api/jobs"),
+                api.get("/api/drivers"),
             ]);
 
             setJobs(jobsResponse.data.jobs || []);
             setDrivers(driversResponse.data.drivers || []);
         } catch (err) {
             console.error("Error fetching data:", err);
-            setError(err.response?.data?.message || "Failed to load dashboard data");
+            setError(
+                err.response?.data?.message || "Failed to load dashboard data"
+            );
             if (err.response?.status === 401) {
                 navigate("/login");
             }
@@ -54,10 +56,10 @@ const AdminDashboard = () => {
         try {
             setLoading(true);
             setError(null);
-            
-            const response = await axios.post("/api/jobs", newJob);
-            
-            setJobs(prevJobs => [...prevJobs, response.data.job]);
+
+            const response = await api.post("/api/jobs", newJob);
+
+            setJobs((prevJobs) => [...prevJobs, response.data.job]);
             setNewJob({
                 pickup_address: "",
                 delivery_address: "",
@@ -65,7 +67,6 @@ const AdminDashboard = () => {
                 recipient_phone: "",
                 driver_id: "",
             });
-            
         } catch (err) {
             setError(err.response?.data?.message || "Failed to create job");
         } finally {
@@ -81,10 +82,9 @@ const AdminDashboard = () => {
         try {
             setLoading(true);
             setError(null);
-            
-            await axios.delete(`/api/jobs/${jobId}`);
-            setJobs(prevJobs => prevJobs.filter(job => job.id !== jobId));
-            
+
+            await api.delete(`/api/jobs/${jobId}`);
+            setJobs((prevJobs) => prevJobs.filter((job) => job.id !== jobId));
         } catch (err) {
             setError(err.response?.data?.message || "Failed to delete job");
         } finally {
@@ -96,14 +96,17 @@ const AdminDashboard = () => {
         try {
             setLoading(true);
             setError(null);
-            
-            await axios.post(`/api/jobs/${jobId}/assign`, { driver_id: driverId });
-            
+
+            await api.post(`/api/jobs/${jobId}/assign`, {
+                driver_id: driverId,
+            });
+
             // Update the local state to reflect the change
-            setJobs(prevJobs => prevJobs.map(job => 
-                job.id === jobId ? { ...job, driver_id: driverId } : job
-            ));
-            
+            setJobs((prevJobs) =>
+                prevJobs.map((job) =>
+                    job.id === jobId ? { ...job, driver_id: driverId } : job
+                )
+            );
         } catch (err) {
             setError(err.response?.data?.message || "Failed to assign driver");
         } finally {
@@ -123,7 +126,7 @@ const AdminDashboard = () => {
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                <button 
+                <button
                     onClick={fetchData}
                     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
@@ -147,10 +150,12 @@ const AdminDashboard = () => {
                             placeholder="Pickup Address"
                             className="p-2 border rounded"
                             value={newJob.pickup_address}
-                            onChange={(e) => setNewJob({
-                                ...newJob,
-                                pickup_address: e.target.value,
-                            })}
+                            onChange={(e) =>
+                                setNewJob({
+                                    ...newJob,
+                                    pickup_address: e.target.value,
+                                })
+                            }
                             required
                         />
                         <input
@@ -158,10 +163,12 @@ const AdminDashboard = () => {
                             placeholder="Delivery Address"
                             className="p-2 border rounded"
                             value={newJob.delivery_address}
-                            onChange={(e) => setNewJob({
-                                ...newJob,
-                                delivery_address: e.target.value,
-                            })}
+                            onChange={(e) =>
+                                setNewJob({
+                                    ...newJob,
+                                    delivery_address: e.target.value,
+                                })
+                            }
                             required
                         />
                         <input
@@ -169,10 +176,12 @@ const AdminDashboard = () => {
                             placeholder="Recipient Name"
                             className="p-2 border rounded"
                             value={newJob.recipient_name}
-                            onChange={(e) => setNewJob({
-                                ...newJob,
-                                recipient_name: e.target.value,
-                            })}
+                            onChange={(e) =>
+                                setNewJob({
+                                    ...newJob,
+                                    recipient_name: e.target.value,
+                                })
+                            }
                             required
                         />
                         <input
@@ -180,19 +189,23 @@ const AdminDashboard = () => {
                             placeholder="Recipient Phone"
                             className="p-2 border rounded"
                             value={newJob.recipient_phone}
-                            onChange={(e) => setNewJob({
-                                ...newJob,
-                                recipient_phone: e.target.value,
-                            })}
+                            onChange={(e) =>
+                                setNewJob({
+                                    ...newJob,
+                                    recipient_phone: e.target.value,
+                                })
+                            }
                             required
                         />
                         <select
                             className="p-2 border rounded"
                             value={newJob.driver_id}
-                            onChange={(e) => setNewJob({
-                                ...newJob,
-                                driver_id: e.target.value,
-                            })}
+                            onChange={(e) =>
+                                setNewJob({
+                                    ...newJob,
+                                    driver_id: e.target.value,
+                                })
+                            }
                             required
                         >
                             <option value="">Select Driver</option>
@@ -207,10 +220,10 @@ const AdminDashboard = () => {
                         type="submit"
                         disabled={loading}
                         className={`w-full md:w-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ${
-                            loading ? 'opacity-50 cursor-not-allowed' : ''
+                            loading ? "opacity-50 cursor-not-allowed" : ""
                         }`}
                     >
-                        {loading ? 'Creating...' : 'Create Job'}
+                        {loading ? "Creating..." : "Create Job"}
                     </button>
                 </form>
             </div>
@@ -245,19 +258,33 @@ const AdminDashboard = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {jobs.map((job) => (
                                 <tr key={job.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap">{job.pickup_address}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">{job.delivery_address}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        {job.pickup_address}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        {job.delivery_address}
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         {job.recipient_name}
                                         <br />
-                                        <span className="text-sm text-gray-500">{job.recipient_phone}</span>
+                                        <span className="text-sm text-gray-500">
+                                            {job.recipient_phone}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            ${job.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                                              job.status === 'failed' ? 'bg-red-100 text-red-800' :
-                                              job.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                                              'bg-gray-100 text-gray-800'}`}>
+                                        <span
+                                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                            ${
+                                                job.status === "completed"
+                                                    ? "bg-green-100 text-green-800"
+                                                    : job.status === "failed"
+                                                    ? "bg-red-100 text-red-800"
+                                                    : job.status ===
+                                                      "in_progress"
+                                                    ? "bg-blue-100 text-blue-800"
+                                                    : "bg-gray-100 text-gray-800"
+                                            }`}
+                                        >
                                             {job.status}
                                         </span>
                                     </td>
@@ -265,11 +292,21 @@ const AdminDashboard = () => {
                                         <select
                                             className="border rounded p-1"
                                             value={job.driver_id || ""}
-                                            onChange={(e) => handleAssignDriver(job.id, e.target.value)}
+                                            onChange={(e) =>
+                                                handleAssignDriver(
+                                                    job.id,
+                                                    e.target.value
+                                                )
+                                            }
                                         >
-                                            <option value="">Select Driver</option>
+                                            <option value="">
+                                                Select Driver
+                                            </option>
                                             {drivers.map((driver) => (
-                                                <option key={driver.id} value={driver.id}>
+                                                <option
+                                                    key={driver.id}
+                                                    value={driver.id}
+                                                >
                                                     {driver.name}
                                                 </option>
                                             ))}
@@ -277,7 +314,9 @@ const AdminDashboard = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <button
-                                            onClick={() => handleDeleteJob(job.id)}
+                                            onClick={() =>
+                                                handleDeleteJob(job.id)
+                                            }
                                             className="text-red-600 hover:text-red-900"
                                         >
                                             Delete
