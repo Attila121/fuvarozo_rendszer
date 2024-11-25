@@ -4,6 +4,10 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\User;
+use App\Models\Job;
+use App\Models\Vehicle;
+
 
 class DatabaseSeeder extends Seeder
 {
@@ -12,11 +16,30 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
+        // Create an Admin
+        User::factory()->admin()->create([
+            'email' => 'admin@delivery.com',
+            'password' => bcrypt('password')
+        ]);
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        // Create 5 drivers
+        $drivers = User::factory()
+            ->count(5)
+            ->driver()
+            ->create();
+
+        // Create one vehicle for each driver
+        foreach ($drivers as $driver) {
+            Vehicle::factory()->create([
+                'user_id' => $driver->id
+            ]);
+        }
+
+        // Create jobs and assign them to random drivers
+        foreach (range(1, 10) as $index) {
+            Job::factory()->create([
+                'driver_id' => $drivers->random()->id
+            ]);
+        }
     }
 }
