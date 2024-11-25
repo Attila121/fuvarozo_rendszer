@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\User;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Job>
@@ -22,7 +23,6 @@ class JobFactory extends Factory
             'recipient_name' => fake()->name(),
             'recipient_phone' => fake()->phoneNumber(),
             'status' => fake()->randomElement(['assigned', 'in_progress', 'completed', 'failed']),
-            'driver_id' => UserFactory::factory()->create(['role' => 'driver'])->id
         ];
     }
 

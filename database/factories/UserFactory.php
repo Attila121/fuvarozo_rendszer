@@ -3,14 +3,21 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
  */
 class UserFactory extends Factory
 {
+    use HasFactory;
+
+    
     public function definition(): array
     {
         return [
@@ -29,10 +36,20 @@ class UserFactory extends Factory
         ]);
     }
 
-    public function driver(): Factory
+    public function drivers()
     {
-        return $this->state([
-            'role' => 'driver',
+        if (!Auth::user()->isAdmin()) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $drivers = User::where('role', 'driver')
+            ->select('id', 'name')
+            ->get();
+
+        return response()->json([
+            'drivers' => $drivers
         ]);
     }
 }

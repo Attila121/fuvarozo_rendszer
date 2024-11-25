@@ -61,4 +61,57 @@ class UserController extends Controller
     {
         //
     }
+
+    public function driverJobs($driverId)
+    {
+        $user = auth()->user();
+        
+        // Only admin or the driver themselves can see their jobs
+        if (!$user->isAdmin() && $user->id != $driverId) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $jobs = Job::where('driver_id', $driverId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'jobs' => $jobs
+        ]);
+    }
+
+    public function drivers()
+    {
+        if (!auth()->user()->isAdmin()) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $drivers = User::where('role', 'driver')
+            ->select('id', 'name')
+            ->get();
+
+        return response()->json([
+            'drivers' => $drivers
+        ]);
+    }
+    public function admins()
+    {
+        if (!auth()->user()->isAdmin()) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $admins = User::where('role', 'admin')
+            ->select('id', 'name')
+            ->get();
+
+        return response()->json([
+            'admins' => $admins
+        ]);
+    }
 }

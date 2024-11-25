@@ -3,6 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use App\Models\Job;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+
 
 
 /*
@@ -37,12 +43,61 @@ tudja frissíteni:
 class JobController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of jobs.
      */
     public function index()
     {
-        //
+        $user = Auth::user();
+        
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+        
+
+        if ($user->isAdmin()) {
+            $jobs = Job::with('driver')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($job) {
+                return [
+                    'id' => $job->id,
+                    'pickup_address' => $job->pickup_address,
+                    'delivery_address' => $job->delivery_address,
+                    'recipient_name' => $job->recipient_name,
+                    'recipient_phone' => $job->recipient_phone,
+                    'status' => $job->status,
+                    'driver' => $job->driver ? [
+                        'id' => $job->driver->id,
+                        'name' => $job->driver->name,
+                    ] : null,
+                    'created_at' => $job->created_at->format('Y-m-d H:i:s')
+                ];
+            });
+        } else {
+            $jobs = $user->jobs()
+                    ->orderBy('created_at', 'desc')
+                    ->get()
+                    ->map(function ($job) {
+                        return [
+                            'id' => $job->id,
+                            'pickup_address' => $job->pickup_address,
+                            'delivery_address' => $job->delivery_address,
+                            'recipient_name' => $job->recipient_name,
+                            'recipient_phone' => $job->recipient_phone,
+                            'status' => $job->status,
+                            'created_at' => $job->created_at->format('Y-m-d H:i:s')
+                        ];
+                    });
+        }
+
+        return response()->json([
+            'success' => true,
+            'jobs' => $jobs
+        ]);
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -57,7 +112,22 @@ class JobController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'pickup_address' => 'required|string',
+            'delivery_address' => 'required|string',
+            'recipient_name' => 'required|string',
+            'recipient_phone' => 'required|string',
+            'driver_id' => 'required|exists:users,id'
+        ]);
+
+        $job = Job::create([...$validated, 'status' => Job::STATUS_ASSIGNED]);
+
+        return response()->json([
+            'message' => 'Job created',
+            'job' => $job
+        ], 201);
+
+
     }
 
     /**
@@ -79,16 +149,88 @@ class JobController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Job $job)
     {
-        //
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        } 
+
+        if ($user->isAdmin()){
+            $validated = $request->validate([
+                'pickup_address' => 'required|string',
+                'delivery_address' => 'required|string',
+                'recipient_name' => 'required|string',
+                'recipient_phone' => 'required|string',
+                'driver_id' => 'required|exists:users,id',
+                'status' => 'sometimes|in,' . implode(',', [
+                    Job::STATUS_ASSIGNED,
+                    Job::STATUS_IN_PROGRESS,
+                    Job::STATUS_COMPLETED,
+                    Job::STATUS_FAILED
+                ])
+            ]);
+        }else{
+            $validated = $request->validate([
+                'status' => 'required|in,' . implode(',', [
+                    Job::STATUS_IN_PROGRESS,
+                    Job::STATUS_COMPLETED,
+                    Job::STATUS_FAILED
+                ])
+            ]);
+        }
+
+        $job->update($validated);
+
+        return response()->json([
+            'message' => 'Job updated',
+            'job' => $job
+        ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Job $job)
     {
-        //
+
+        if(!Auth::user()->isAdmin()){
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+        $job->delete();
+
+        return response()->json([
+            'message' => 'Job deleted'
+        ]);
+    }
+
+    /**
+     * Assign a job to a driver.
+     */
+    public function assignDriver(Request $request, Job $job){
+        if (!Auth::user()->isAdmin()) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'driver_id' => 'required|exists:users,id'
+        ]);
+
+        $job->update([
+            'driver_id' => $validated['driver_id'],
+            'status' => Job::STATUS_ASSIGNED
+        ]);
+
+        return response()->json([
+            'message' => 'Driver assigned successfully',
+            'job' => $job
+        ]);
     }
 }
