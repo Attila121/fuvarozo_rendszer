@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import EditableCell from "../EditableCell";
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -8,6 +9,10 @@ const AdminDashboard = () => {
     const [drivers, setDrivers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [editingId, setEditingId] = useState(null);
+    const [editingData, setEditingData] = useState({});
+    const [editingFields, setEditingFields] = useState({});
+
     const [newJob, setNewJob] = useState({
         pickup_address: "",
         delivery_address: "",
@@ -15,6 +20,109 @@ const AdminDashboard = () => {
         recipient_phone: "",
         driver_id: "",
     });
+
+    const handleEdit = (job) => {
+        setEditingId(job.id);
+        // Make sure we capture all editable fields
+        setEditingData({
+            pickup_address: job.pickup_address,
+            delivery_address: job.delivery_address,
+            recipient_name: job.recipient_name,
+            recipient_phone: job.recipient_phone,
+            status: job.status,
+            driver_id: job.driver_id,
+        });
+    };
+
+    const handleSaveEdit = async (jobId, field, value) => {
+        try {
+            setLoading(true);
+            const updatedData = {
+                ...jobs.find((job) => job.id === jobId),
+                [field]: value,
+            };
+
+            const response = await api.put(`/api/jobs/${jobId}`, updatedData);
+
+            setJobs(
+                jobs.map((job) =>
+                    job.id === jobId ? { ...job, [field]: value } : job
+                )
+            );
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to update job");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const StatusCell = ({ value, job }) => {
+        const [isEditing, setIsEditing] = useState(false);
+        const [localStatus, setLocalStatus] = useState(value);
+
+        const statusClasses = {
+            completed: "bg-green-100 text-green-800",
+            failed: "bg-red-100 text-red-800",
+            in_progress: "bg-blue-100 text-blue-800",
+            assigned: "bg-gray-100 text-gray-800",
+        };
+
+        const handleStatusChange = async (newStatus) => {
+            try {
+                const response = await api.put(`/api/jobs/${job.id}`, {
+                    ...job,
+                    status: newStatus,
+                });
+
+                setLocalStatus(newStatus);
+                // Update the jobs state in the parent component
+                setJobs((prevJobs) =>
+                    prevJobs.map((j) =>
+                        j.id === job.id ? { ...j, status: newStatus } : j
+                    )
+                );
+            } catch (err) {
+                setError(
+                    err.response?.data?.message || "Failed to update status"
+                );
+            } finally {
+                setIsEditing(false);
+            }
+        };
+
+        return (
+            <div className="group flex items-center justify-between">
+                {isEditing ? (
+                    <select
+                        className="p-1 border rounded w-full"
+                        value={localStatus}
+                        onChange={(e) => handleStatusChange(e.target.value)}
+                        onBlur={() => setIsEditing(false)}
+                        autoFocus
+                    >
+                        <option value="assigned">Assigned</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                ) : (
+                    <>
+                        <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClasses[value]}`}
+                        >
+                            {value.replace("_", " ")}
+                        </span>
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="invisible group-hover:visible text-blue-600 hover:text-blue-800 ml-2"
+                        >
+                            Edit
+                        </button>
+                    </>
+                )}
+            </div>
+        );
+    };
 
     // Check authentication on component mount
     useEffect(() => {
@@ -259,34 +367,40 @@ const AdminDashboard = () => {
                             {jobs.map((job) => (
                                 <tr key={job.id}>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        {job.pickup_address}
+                                        <EditableCell
+                                            value={job.pickup_address}
+                                            field="pickup_address"
+                                            job={job}
+                                        />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        {job.delivery_address}
+                                        <EditableCell
+                                            value={job.delivery_address}
+                                            field="delivery_address"
+                                            job={job}
+                                        />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        {job.recipient_name}
-                                        <br />
-                                        <span className="text-sm text-gray-500">
-                                            {job.recipient_phone}
-                                        </span>
+                                        <EditableCell
+                                            value={job.recipient_name}
+                                            field="recipient_name"
+                                            job={job}
+                                        />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                            ${
-                                                job.status === "completed"
-                                                    ? "bg-green-100 text-green-800"
-                                                    : job.status === "failed"
-                                                    ? "bg-red-100 text-red-800"
-                                                    : job.status ===
-                                                      "in_progress"
-                                                    ? "bg-blue-100 text-blue-800"
-                                                    : "bg-gray-100 text-gray-800"
-                                            }`}
-                                        >
-                                            {job.status}
-                                        </span>
+                                        <EditableCell
+                                            value={job.recipient_phone}
+                                            field="recipient_phone"
+                                            job={job}
+                                        />
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <EditableCell
+                                            value={job.status}
+                                            field="status"
+                                            job={job}
+                                            type="select"
+                                        />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <select
@@ -313,14 +427,34 @@ const AdminDashboard = () => {
                                         </select>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <button
-                                            onClick={() =>
-                                                handleDeleteJob(job.id)
-                                            }
-                                            className="text-red-600 hover:text-red-900"
-                                        >
-                                            Delete
-                                        </button>
+                                        {editingId === job.id ? (
+                                            <div className="space-x-2">
+                                                <button
+                                                    onClick={handleSaveEdit}
+                                                    className="text-green-600 hover:text-green-900"
+                                                >
+                                                    Save
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingId(null);
+                                                        setEditingData({});
+                                                    }}
+                                                    className="text-gray-600 hover:text-gray-900"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() =>
+                                                    handleDeleteJob(job.id)
+                                                }
+                                                className="text-red-600 hover:text-red-900"
+                                            >
+                                                Delete
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

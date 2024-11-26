@@ -140,36 +140,56 @@ class JobController extends Controller
                 'message' => 'Unauthorized'
             ], 401);
         }
-
         if ($user->isAdmin()) {
             $validated = $request->validate([
-                'pickup_address' => 'required|string',
-                'delivery_address' => 'required|string',
-                'recipient_name' => 'required|string',
-                'recipient_phone' => 'required|string',
-                'driver_id' => 'required|exists:users,id',
-                'status' => 'sometimes|in,' . implode(',', [
+                'pickup_address' => 'sometimes|required|string',
+                'delivery_address' => 'sometimes|required|string',
+                'recipient_name' => 'sometimes|required|string',
+                'recipient_phone' => 'sometimes|required|string',
+                'driver_id' => 'sometimes|required|exists:users,id',
+                'status' => 'sometimes|in:' . implode(',', [
                     Job::STATUS_ASSIGNED,
                     Job::STATUS_IN_PROGRESS,
                     Job::STATUS_COMPLETED,
                     Job::STATUS_FAILED
                 ])
             ]);
-        } else {
-            $validated = $request->validate([
-                'status' => 'required|in,' . implode(',', [
-                    Job::STATUS_IN_PROGRESS,
-                    Job::STATUS_COMPLETED,
-                    Job::STATUS_FAILED
-                ])
+
+            // Log the change for audit purposes
+            Log::info('Job updated by admin', [
+                'job_id' => $job->id,
+                'admin_id' => $user->id,
+                'changes' => $validated
+            ]);
+
+            $job->update($validated);
+
+            return response()->json([
+                'message' => 'Job updated successfully',
+                'job' => $job->fresh()  // Get fresh instance with updated data
             ]);
         }
+
+        // If user is not admin, they can only update status
+        if ($job->driver_id !== $user->id) {
+            return response()->json([
+                'message' => 'Unauthorized to update this job'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:' . implode(',', [
+                Job::STATUS_IN_PROGRESS,
+                Job::STATUS_COMPLETED,
+                Job::STATUS_FAILED
+            ])
+        ]);
 
         $job->update($validated);
 
         return response()->json([
-            'message' => 'Job updated',
-            'job' => $job
+            'message' => 'Job status updated',
+            'job' => $job->fresh()
         ]);
     }
 
