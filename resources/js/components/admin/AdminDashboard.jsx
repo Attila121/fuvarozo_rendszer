@@ -11,7 +11,7 @@ const AdminDashboard = () => {
     const [error, setError] = useState(null);
     const [editingId, setEditingId] = useState(null);
     const [editingData, setEditingData] = useState({});
-    const [editingFields, setEditingFields] = useState({});
+    const [statusFilter, setStatusFilter] = useState("all");
 
     const [newJob, setNewJob] = useState({
         pickup_address: "",
@@ -21,18 +21,6 @@ const AdminDashboard = () => {
         driver_id: "",
     });
 
-    const handleEdit = (job) => {
-        setEditingId(job.id);
-        // Make sure we capture all editable fields
-        setEditingData({
-            pickup_address: job.pickup_address,
-            delivery_address: job.delivery_address,
-            recipient_name: job.recipient_name,
-            recipient_phone: job.recipient_phone,
-            status: job.status,
-            driver_id: job.driver_id,
-        });
-    };
 
     const handleSaveEdit = async (jobId, field, value) => {
         try {
@@ -222,6 +210,10 @@ const AdminDashboard = () => {
         }
     };
 
+    const filteredJobs = jobs.filter(job => 
+        statusFilter === "all" ? true : job.status === statusFilter
+    );
+
     if (loading && !jobs.length) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -336,6 +328,21 @@ const AdminDashboard = () => {
                 </form>
             </div>
 
+            <div className="mb-4 flex items-center">
+                <label className="mr-2 text-gray-700">Filter by Status:</label>
+                <select 
+                    className="border rounded p-2"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                    <option value="all">All Status</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="failed">Failed</option>
+                </select>
+            </div>
+
             {/* Jobs List */}
             <div className="bg-white p-6 rounded-lg shadow-sm">
                 <h2 className="text-xl font-semibold mb-4">Jobs List</h2>
@@ -364,7 +371,7 @@ const AdminDashboard = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                            {jobs.map((job) => (
+                            {filteredJobs.map((job) => (
                                 <tr key={job.id}>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <EditableCell
