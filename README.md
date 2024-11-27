@@ -2,6 +2,42 @@
 
 Egyszerű fuvarozó rendszer Laravel keretrendszerben, amely lehetővé teszi a cég adminisztrátora új munkákat hozhat létre, és azokat fuvarozókhoz rendelheti. Minden fuvarozónak egy járműve lehet, és több munkát végezhet egy időben. A feladat fő célja a backend funkcionalitás kidolgozása, a frontend lehet egyszerű, minimalista, az adminisztrációs műveletek kezelése a fő hangsúly. 
 
+## Telepítés és futtatás
+
+1. **Környezeti változók beállítása**:
+    - Másold az `.env.example` fájlt `.env` néven.
+    - Állítsd be a megfelelő adatbázis kapcsolatokat az `.env` fájlban.
+
+2. **Függőségek telepítése**:
+    ```bash
+    composer install
+    npm install
+    ```
+
+3. **Adatbázis migrációk és seederek futtatása**:
+    ```bash
+    php artisan migrate --seed
+    ```
+
+4. **Fejlesztői szerver indítása**:
+    ```bash
+    php artisan serve
+    npm run dev
+    ```
+
+5. **Hozzáférés a rendszerhez**:
+    - Nyisd meg a böngészőt és navigálj a `http://localhost:8000` címre.
+
+6. **Adminisztrátor bejelentkezés**:
+    - Email: `admin@delivery.com`
+    - Jelszó: `password`
+
+7. **Fuvarozó bejelentkezés**:
+    - Email: `sam@mail.com`
+    - Jelszó: `sam12345`
+
+
+
 ## Funkciók
 
 ### Felhasználói szerepkörök
@@ -67,38 +103,5 @@ Egyszerű fuvarozó rendszer Laravel keretrendszerben, amely lehetővé teszi a 
 - Értesítések: Az adminisztrátor értesítést kaphat, ha egy munka sikertelen lett.
 - API végpontok: Készíts egy egyszerű REST API-t a munkák létrehozására, módosítására, valamint a fuvarozók státuszának frissítésére.
 
-## Telepítés és futtatás
-
-1. **Környezeti változók beállítása**:
-    - Másold az `.env.example` fájlt `.env` néven.
-    - Állítsd be a megfelelő adatbázis kapcsolatokat az `.env` fájlban.
-
-2. **Függőségek telepítése**:
-    ```bash
-    composer install
-    npm install
-    ```
-
-3. **Adatbázis migrációk és seederek futtatása**:
-    ```bash
-    php artisan migrate --seed
-    ```
-
-4. **Fejlesztői szerver indítása**:
-    ```bash
-    php artisan serve
-    npm run dev
-    ```
-
-5. **Hozzáférés a rendszerhez**:
-    - Nyisd meg a böngészőt és navigálj a `http://localhost:8000` címre.
-
-6. **Adminisztrátor bejelentkezés**:
-    - Email: `admin@delivery.com`
-    - Jelszó: `password`
-
-7. **Fuvarozó bejelentkezés**:
-    - Email: `sam@mail.com`
-    - Jelszó: `sam12345`
 
 
