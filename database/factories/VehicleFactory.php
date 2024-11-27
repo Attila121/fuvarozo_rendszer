@@ -21,7 +21,7 @@ class VehicleFactory extends Factory
             'brand' => fake()->randomElement(['Toyota', 'Ford', 'Mercedes', 'Volvo']),
             'model' => fake()->randomElement(['Sprinter', 'Transit', 'Proace', 'FH']),
             'license_plate' => strtoupper(fake()->bothify('???-###')),
-
+            'user_id' => User::factory()
         ];
     }
 }

@@ -9,15 +9,20 @@ use Illuminate\Support\Str;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
-
 /**
+ * UserFactory class for generating User model instances with predefined attributes.
+ * 
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
  */
 class UserFactory extends Factory
 {
     use HasFactory;
 
-    
+    /**
+     * Define the model's default state.
+     * 
+     * @return array
+     */
     public function definition(): array
     {
         return [
@@ -28,7 +33,12 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
         ];
     }
-    
+
+    /**
+     * Define the state for an admin user.
+     * 
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     */
     public function admin(): Factory
     {
         return $this->state([
@@ -36,6 +46,25 @@ class UserFactory extends Factory
         ]);
     }
 
+    /**
+     * Define the state for a driver user.
+     * 
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     */
+    public function driver(): Factory
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'role' => 'driver',
+            ];
+        });
+    }
+
+    /**
+     * Retrieve a list of drivers if the authenticated user is an admin.
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function drivers()
     {
         if (!Auth::user()->isAdmin()) {

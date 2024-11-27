@@ -1,25 +1,27 @@
 // DriverDashboard.jsx
 import React, { useState, useEffect } from "react";
-import api from "../../services/api"; // Update import
+import api from "../../services/api"; // Import the API service
 import { useNavigate } from "react-router-dom";
 
+// Component for the driver's dashboard
 const DriverDashboard = () => {
     const navigate = useNavigate();
-    const [jobs, setJobs] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [updateLoading, setUpdateLoading] = useState(false);
+    const [jobs, setJobs] = useState([]); // State to store jobs
+    const [loading, setLoading] = useState(true); // State to manage loading state
+    const [error, setError] = useState(null); // State to manage errors
+    const [updateLoading, setUpdateLoading] = useState(false); // State to manage update loading state
 
+    // Fetch jobs when the component mounts
     useEffect(() => {
         fetchJobs();
     }, []);
 
+    // Function to fetch jobs from the API
     const fetchJobs = async () => {
         try {
             setLoading(true);
             const token = localStorage.getItem("token");
             const response = await api.get("/api/jobs", {
-                // Update axios to api
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -36,12 +38,13 @@ const DriverDashboard = () => {
         }
     };
 
+    // Function to handle status updates for jobs
     const handleStatusUpdate = async (jobId, newStatus) => {
         try {
             setUpdateLoading(true);
             const token = localStorage.getItem("token");
             await api.put(
-                `/api/jobs/${jobId}`, // Update axios to api
+                `/api/jobs/${jobId}`,
                 { status: newStatus },
                 {
                     headers: {
@@ -79,6 +82,7 @@ const DriverDashboard = () => {
             .join(" ");
     };
 
+    // Render loading state
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -90,6 +94,7 @@ const DriverDashboard = () => {
         );
     }
 
+    // Render the dashboard
     return (
         <div className="p-6 max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-6">

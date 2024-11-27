@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\NotificationController;
 
 
 
@@ -37,4 +38,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/jobs/{job}/assign', [JobController::class, 'assignDriver']);
 
     Route::get('/drivers', [UserController::class, 'drivers']);
+});
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
 });

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import EditableCell from "../EditableCell";
 
+// AdminDashboard component
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const [jobs, setJobs] = useState([]);
@@ -21,29 +22,31 @@ const AdminDashboard = () => {
         driver_id: "",
     });
 
-
+    // Function to handle saving edits to a job
     const handleSaveEdit = async (jobId, field, value) => {
         try {
             setLoading(true);
+            console.log('Updating job:', {jobId, field, value});
             const updatedData = {
                 ...jobs.find((job) => job.id === jobId),
                 [field]: value,
             };
-
+            console.log('Request data:', updatedData);
             const response = await api.put(`/api/jobs/${jobId}`, updatedData);
-
             setJobs(
                 jobs.map((job) =>
                     job.id === jobId ? { ...job, [field]: value } : job
                 )
             );
         } catch (err) {
+            console.error('Update error:', err.response?.data || err);
             setError(err.response?.data?.message || "Failed to update job");
         } finally {
             setLoading(false);
         }
     };
 
+    // StatusCell component for editing job status
     const StatusCell = ({ value, job }) => {
         const [isEditing, setIsEditing] = useState(false);
         const [localStatus, setLocalStatus] = useState(value);
@@ -122,16 +125,15 @@ const AdminDashboard = () => {
         fetchData();
     }, [navigate]);
 
+    // Function to fetch jobs and drivers data
     const fetchData = async () => {
         try {
             setLoading(true);
             setError(null);
-
             const [jobsResponse, driversResponse] = await Promise.all([
                 api.get("/api/jobs"),
                 api.get("/api/drivers"),
             ]);
-
             setJobs(jobsResponse.data.jobs || []);
             setDrivers(driversResponse.data.drivers || []);
         } catch (err) {
@@ -147,14 +149,13 @@ const AdminDashboard = () => {
         }
     };
 
+    // Function to handle creating a new job
     const handleCreateJob = async (e) => {
         e.preventDefault();
         try {
             setLoading(true);
             setError(null);
-
             const response = await api.post("/api/jobs", newJob);
-
             setJobs((prevJobs) => [...prevJobs, response.data.job]);
             setNewJob({
                 pickup_address: "",
@@ -170,15 +171,14 @@ const AdminDashboard = () => {
         }
     };
 
+    // Function to handle deleting a job
     const handleDeleteJob = async (jobId) => {
         if (!window.confirm("Are you sure you want to delete this job?")) {
             return;
         }
-
         try {
             setLoading(true);
             setError(null);
-
             await api.delete(`/api/jobs/${jobId}`);
             setJobs((prevJobs) => prevJobs.filter((job) => job.id !== jobId));
         } catch (err) {
@@ -188,16 +188,14 @@ const AdminDashboard = () => {
         }
     };
 
+    // Function to handle assigning a driver to a job
     const handleAssignDriver = async (jobId, driverId) => {
         try {
             setLoading(true);
             setError(null);
-
             await api.post(`/api/jobs/${jobId}/assign`, {
                 driver_id: driverId,
             });
-
-            // Update the local state to reflect the change
             setJobs((prevJobs) =>
                 prevJobs.map((job) =>
                     job.id === jobId ? { ...job, driver_id: driverId } : job
@@ -210,10 +208,12 @@ const AdminDashboard = () => {
         }
     };
 
+    // Filter jobs based on status
     const filteredJobs = jobs.filter(job => 
         statusFilter === "all" ? true : job.status === statusFilter
     );
 
+    // Render loading spinner if data is still loading
     if (loading && !jobs.length) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -222,6 +222,7 @@ const AdminDashboard = () => {
         );
     }
 
+    // Render the admin dashboard
     return (
         <div className="p-6">
             <div className="flex justify-between items-center mb-6">
@@ -363,10 +364,10 @@ const AdminDashboard = () => {
                                     Status
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Driver
+                                    Actions
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actions
+                                    Driver
                                 </th>
                             </tr>
                         </thead>
@@ -378,6 +379,8 @@ const AdminDashboard = () => {
                                             value={job.pickup_address}
                                             field="pickup_address"
                                             job={job}
+                                            onUpdate={handleSaveEdit}  
+                                            setError={setError}
                                         />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -385,6 +388,8 @@ const AdminDashboard = () => {
                                             value={job.delivery_address}
                                             field="delivery_address"
                                             job={job}
+                                            onUpdate={handleSaveEdit}  
+                                            setError={setError}
                                         />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -392,6 +397,8 @@ const AdminDashboard = () => {
                                             value={job.recipient_name}
                                             field="recipient_name"
                                             job={job}
+                                            onUpdate={handleSaveEdit}  
+                                            setError={setError}
                                         />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -399,6 +406,8 @@ const AdminDashboard = () => {
                                             value={job.recipient_phone}
                                             field="recipient_phone"
                                             job={job}
+                                            onUpdate={handleSaveEdit}  
+                                            setError={setError}
                                         />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -407,6 +416,8 @@ const AdminDashboard = () => {
                                             field="status"
                                             job={job}
                                             type="select"
+                                            onUpdate={handleSaveEdit}  
+                                            setError={setError}
                                         />
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">

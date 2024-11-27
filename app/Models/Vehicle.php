@@ -10,7 +10,7 @@ class Vehicle extends Model
 {
     use HasFactory;
 
-
+    // Define the fillable attributes for mass assignment
     protected $fillable = [
         'brand',
         'model',
@@ -18,6 +18,7 @@ class Vehicle extends Model
         'user_id'
     ];
 
+    // Define the relationship between Vehicle and User (driver)
     public function driver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
