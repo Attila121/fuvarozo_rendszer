@@ -9,37 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-
-
-
-/*
-
-Adminisztrátor: Képes munkákat létrehozni, módosítani, törölni és fuvarozókhoz
-rendelni.
-Fuvarozó: Megtekintheti a neki kiosztott munkákat, és frissítheti azok státuszát. 
-
-
-Adminisztrátor funkciói:
-1. Munkák létrehozása: Az adminisztrátor létrehozhat új fuvarfeladatokat, melyek
-tartalmazzák a kiindulási címet, érkezési címet, címzett nevét és elérhetőségét.
-2. Munkák módosítása: Munkák adatai (pl. címek, címzett) módosíthatók az
-adminisztrátor által.
-3. Munkák törlése: Adminisztrátor törölhet munkákat a rendszerből.
-4. Munkák fuvarozókhoz rendelése: Az adminisztrátor a létrehozott munkákat
-fuvarozókhoz rendelheti. 
-
-Fuvarozó funkciói:
-1. Munkák megtekintése: Fuvarozók megtekinthetik a nekik kiosztott munkákat, azok
-státuszát, valamint a címzett adatait.
-2. Munkák státuszának módosítása: A fuvarozó a neki kiosztott munka státuszát
-tudja frissíteni:
-◦ Kiosztva
-◦ Folyamatban
-◦ Elvégezve
-◦ Sikertelen (pl. a címzett nem volt elérhető)
-
-
-*/
+use App\Notifications\JobFailedNotification;
 
 class JobController extends Controller
 {
@@ -49,31 +19,37 @@ class JobController extends Controller
     public function index()
     {
         try {
+            // Check if the user is authenticated
             if (!auth()->user()) {
                 return response()->json(['message' => 'Unauthorized'], 401);
             }
 
+            // Log the user accessing jobs
             Log::info('User accessing jobs', [
                 'user_id' => auth()->id(),
                 'is_admin' => auth()->user()->isAdmin()
             ]);
 
+            // Fetch jobs based on user role
             if (auth()->user()->isAdmin()) {
                 $jobs = Job::with('driver')->get();
             } else {
                 $jobs = Job::where('driver_id', auth()->id())->get();
             }
 
+            // Return the jobs in JSON format
             return response()->json([
                 'status' => 'success',
                 'jobs' => $jobs
             ]);
         } catch (\Exception $e) {
+            // Log any errors
             Log::error('Error in jobs index:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
+            // Return an error response
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to fetch jobs'
@@ -81,21 +57,12 @@ class JobController extends Controller
         }
     }
 
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
+        // Validate the request data
         $validated = $request->validate([
             'pickup_address' => 'required|string',
             'delivery_address' => 'required|string',
@@ -104,28 +71,14 @@ class JobController extends Controller
             'driver_id' => 'required|exists:users,id'
         ]);
 
+        // Create a new job with the validated data
         $job = Job::create([...$validated, 'status' => Job::STATUS_ASSIGNED]);
 
+        // Return a success response
         return response()->json([
             'message' => 'Job created',
             'job' => $job
         ], 201);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
     }
 
     /**
@@ -135,41 +88,77 @@ class JobController extends Controller
     {
         $user = Auth::user();
 
+        // Check if the user is authenticated
         if (!$user) {
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
         }
 
+        // If the user is an admin, validate and update the job
         if ($user->isAdmin()) {
             $validated = $request->validate([
-                'pickup_address' => 'required|string',
-                'delivery_address' => 'required|string',
-                'recipient_name' => 'required|string',
-                'recipient_phone' => 'required|string',
-                'driver_id' => 'required|exists:users,id',
-                'status' => 'sometimes|in,' . implode(',', [
+                'pickup_address' => 'sometimes|required|string',
+                'delivery_address' => 'sometimes|required|string',
+                'recipient_name' => 'sometimes|required|string',
+                'recipient_phone' => 'sometimes|required|string',
+                'driver_id' => 'sometimes|required|exists:users,id',
+                'status' => 'sometimes|in:' . implode(',', [
                     Job::STATUS_ASSIGNED,
                     Job::STATUS_IN_PROGRESS,
                     Job::STATUS_COMPLETED,
                     Job::STATUS_FAILED
                 ])
             ]);
-        } else {
-            $validated = $request->validate([
-                'status' => 'required|in,' . implode(',', [
-                    Job::STATUS_IN_PROGRESS,
-                    Job::STATUS_COMPLETED,
-                    Job::STATUS_FAILED
-                ])
+
+            // Notify admins if the job status is updated to failed
+            if (isset($validated['status']) && $validated['status'] === Job::STATUS_FAILED) {
+                $admins = User::where('role', 'admin')->get();
+                foreach ($admins as $admin) {
+                    $admin->notify(new JobFailedNotification($job));
+                }
+            }
+
+            // Log the job update
+            Log::info('Job updated by admin', [
+                'job_id' => $job->id,
+                'admin_id' => $user->id,
+                'changes' => $validated
+            ]);
+
+            // Update the job with the validated data
+            $job->update($validated);
+
+            // Return a success response
+            return response()->json([
+                'message' => 'Job updated successfully',
+                'job' => $job->fresh()
             ]);
         }
 
+        // If the user is not an admin, they can only update the job status
+        if ($job->driver_id !== $user->id) {
+            return response()->json([
+                'message' => 'Unauthorized to update this job'
+            ], 403);
+        }
+
+        // Validate the status update
+        $validated = $request->validate([
+            'status' => 'required|in:' . implode(',', [
+                Job::STATUS_IN_PROGRESS,
+                Job::STATUS_COMPLETED,
+                Job::STATUS_FAILED
+            ])
+        ]);
+
+        // Update the job status
         $job->update($validated);
 
+        // Return a success response
         return response()->json([
-            'message' => 'Job updated',
-            'job' => $job
+            'message' => 'Job status updated',
+            'job' => $job->fresh()
         ]);
     }
 
@@ -178,14 +167,17 @@ class JobController extends Controller
      */
     public function destroy(Job $job)
     {
-
+        // Check if the user is an admin
         if (!Auth::user()->isAdmin()) {
             return response()->json([
                 'message' => 'Unauthorized'
             ], 401);
         }
+
+        // Delete the job
         $job->delete();
 
+        // Return a success response
         return response()->json([
             'message' => 'Job deleted'
         ]);
@@ -196,21 +188,25 @@ class JobController extends Controller
      */
     public function assignDriver(Request $request, Job $job)
     {
+        // Check if the user is an admin
         if (!Auth::user()->isAdmin()) {
             return response()->json([
                 'message' => 'Unauthorized'
             ], 403);
         }
 
+        // Validate the request data
         $validated = $request->validate([
             'driver_id' => 'required|exists:users,id'
         ]);
 
+        // Update the job with the driver ID and set the status to assigned
         $job->update([
             'driver_id' => $validated['driver_id'],
             'status' => Job::STATUS_ASSIGNED
         ]);
 
+        // Return a success response
         return response()->json([
             'message' => 'Driver assigned successfully',
             'job' => $job

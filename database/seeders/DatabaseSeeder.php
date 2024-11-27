@@ -21,6 +21,14 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@delivery.com',
             'password' => bcrypt('password')
         ]);
+        
+        // Create a driver
+        User::factory()->create([
+            'name' => 'Sam',
+            'email' => 'sam@mail.com',
+            'password' => bcrypt('sam12345'),
+            'role' => 'driver'
+        ]);
 
         // Create 5 drivers
         $drivers = User::factory()
